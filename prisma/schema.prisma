@@ -1,0 +1,174 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String?
+  currency  String   @default("IDR") // IDR, USD
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts        Account[]
+  categories      Category[]
+  transactions    Transaction[]
+  budgets         Budget[]
+  goals           Goal[]
+  debts           Debt[]
+  plannedExpenses PlannedExpense[]
+}
+
+model Account {
+  id        Int         @id @default(autoincrement())
+  name      String
+  type      String      // BANK, E_WALLET, CASH, OTHER
+  balance   Float       @default(0)
+  stockSymbol String?   // e.g. BTC, BBCA
+  quantity    Float?    // e.g. 0.5 BTC, 100 Lots
+  imageUrl    String?   // URL to account image/logo
+  userId    Int
+  user      User        @relation(fields: [userId], references: [id])
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  
+  transactions Transaction[]
+  goals        Goal[]     @relation("GoalSourceAccount") // Renaming existing relation for clarity: Goals using this account as source
+  
+  goalId       Int?       // New: Link this account (investment) to a specific Goal (Portfolio)
+  linkedGoal   Goal?      @relation("PortfolioAccounts", fields: [goalId], references: [id])
+  
+  incomingTransfers Transaction[] @relation("TargetAccount")
+  plannedExpenses   PlannedExpense[]
+}
+
+model Category {
+  id        Int             @id @default(autoincrement())
+  name      String
+  type      String          // INCOME, EXPENSE
+  userId    Int
+  user      User            @relation(fields: [userId], references: [id])
+  createdAt DateTime        @default(now())
+  
+  transactions    Transaction[]
+  budgets         Budget[]
+  plannedExpenses PlannedExpense[]
+}
+
+model Transaction {
+  id          Int             @id @default(autoincrement())
+  amount      Float
+  date        DateTime
+  description String?
+  type        String          // INCOME, EXPENSE
+  
+  categoryId  Int
+  category    Category        @relation(fields: [categoryId], references: [id])
+  
+  accountId   Int?
+  account     Account?        @relation(fields: [accountId], references: [id])
+  
+  goalId      Int?
+  goal        Goal?           @relation(fields: [goalId], references: [id])
+  
+  debtId      Int?
+  debt        Debt?           @relation(fields: [debtId], references: [id])
+  
+  userId      Int
+  user        User            @relation(fields: [userId], references: [id])
+  
+  targetAccountId Int?        // For TRANSFER: Destination Account
+  targetAccount   Account?    @relation("TargetAccount", fields: [targetAccountId], references: [id])
+  
+  plannedExpense  PlannedExpense?
+  
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model Budget {
+  id         Int      @id @default(autoincrement())
+  amount     Float
+  month      Int
+  year       Int
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id])
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id])
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Goal {
+  id            Int        @id @default(autoincrement())
+  name          String
+  targetAmount  Float
+  currentAmount Float      @default(0)
+  imageUrl      String?
+  deadline      DateTime?
+  status        String     @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED, CANCELLED
+  userId        Int
+  user          User       @relation(fields: [userId], references: [id])
+  
+  accountId     Int?
+  account       Account?   @relation("GoalSourceAccount", fields: [accountId], references: [id])
+  
+  linkedAccounts Account[] @relation("PortfolioAccounts") // Accounts that belong to this Goal (Portfolio)
+  
+  transactions  Transaction[]
+
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Debt {
+  id          Int        @id @default(autoincrement())
+  personName  String
+  amount      Float
+  dueDate     DateTime?
+  type        String     @default("PAYABLE") // PAYABLE (Hutang), RECEIVABLE (Piutang)
+  status      String     @default("UNPAID")  // UNPAID, PAID
+  description String?
+  totalInstallments Int?  // Total instalments (e.g. 12)
+  currentInstallment Int? // Current installment number (e.g. 1)
+  userId      Int
+  user        User       @relation(fields: [userId], references: [id])
+  
+  transactions Transaction[]
+  
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model PlannedExpense {
+  id          Int          @id @default(autoincrement())
+  amount      Float
+  date        DateTime     // Expected date of expense
+  description String?
+  status      String       @default("PLANNED") // PLANNED, EXECUTED, CANCELLED
+  
+  categoryId  Int
+  category    Category     @relation(fields: [categoryId], references: [id])
+  
+  accountId   Int?
+  account     Account?     @relation(fields: [accountId], references: [id])
+  
+  userId      Int
+  user        User         @relation(fields: [userId], references: [id])
+  
+  transactionId Int?       @unique // Link to actual transaction if executed
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
