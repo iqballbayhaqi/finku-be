@@ -33,7 +33,7 @@ app.use('/api/backup', backupRoutes);
 app.use('/api/planned-expenses', plannedExpenseRoutes);
 
 app.get('/', (req, res) => {
-  res.send('Finku API is running');
+  res.send('Finnan API is running');
 });
 
 export default app;

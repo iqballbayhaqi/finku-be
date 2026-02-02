@@ -56,7 +56,7 @@ export const exportData = async (req: AuthRequest, res: Response) => {
         };
 
         res.setHeader('Content-Type', 'application/json');
-        res.setHeader('Content-Disposition', `attachment; filename=finku_backup_${userId}_${Date.now()}.json`);
+        res.setHeader('Content-Disposition', `attachment; filename=finnan_backup_${userId}_${Date.now()}.json`);
         res.json(backupData);
 
     } catch (error) {
