@@ -1,3 +1,6 @@
 node_modules
 # Keep environment variables out of version control
 .env
+# Database: jangan push DB lokal agar data di setiap server tetap terpisah
+prisma/dev.db
+prisma/*.db

@@ -144,7 +144,7 @@ export const restoreData = async (req: AuthRequest, res: Response) => {
                 }
             }
 
-            // Goals
+            // Goals (termasuk accountId = source account untuk goal)
             if (goals && goals.length > 0) {
                 for (const g of goals) {
                     await tx.goal.create({
@@ -157,9 +157,7 @@ export const restoreData = async (req: AuthRequest, res: Response) => {
                             deadline: g.deadline ? new Date(g.deadline) : null,
                             status: g.status,
                             userId: userId,
-                            // accountId: g.accountId ? Number(g.accountId) : null, // Source account (if any)
-                            // We need to restore source account link if it exists. 
-                            // Since we created accounts above with IDs, this should work if accountId refers to an existing account.
+                            accountId: g.accountId ? Number(g.accountId) : null,
                         }
                     });
                 }
@@ -213,7 +211,7 @@ export const restoreData = async (req: AuthRequest, res: Response) => {
                 });
             }
 
-            // Transactions (after Categories, Accounts, Goals, Debts)
+            // Transactions (after Categories, Accounts, Goals, Debts) - termasuk targetAccountId untuk transfer
             if (transactions && transactions.length > 0) {
                  await tx.transaction.createMany({
                     data: transactions.map((t: any) => ({
@@ -226,6 +224,7 @@ export const restoreData = async (req: AuthRequest, res: Response) => {
                         accountId: t.accountId ? Number(t.accountId) : null,
                         goalId: t.goalId ? Number(t.goalId) : null,
                         debtId: t.debtId ? Number(t.debtId) : null,
+                        targetAccountId: t.targetAccountId ? Number(t.targetAccountId) : null,
                         userId: userId,
                         createdAt: new Date(t.createdAt),
                         updatedAt: new Date(t.updatedAt)
