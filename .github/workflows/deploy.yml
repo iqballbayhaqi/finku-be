@@ -1,0 +1,30 @@
+yaml
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Pull latest code
+        run: |
+          cd /home/ubuntu/finku-be
+          git pull origin main
+      
+      - name: Install Dependencies
+        run: |
+          cd /home/ubuntu/finku-be
+          npm install
+
+      - name: Build
+        run: |
+          cd /home/ubuntu/finku-be
+          npm run build
+
+      - name: Restart PM2
+        run: |
+          cd /home/ubuntu/finku-be
+          pm2 restart finku-backend || pm2 start dist/src/app.js --name finku-backend
