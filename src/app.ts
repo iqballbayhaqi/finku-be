@@ -18,7 +18,13 @@ import dashboardRoutes from './routes/dashboard.routes';
 import backupRoutes from './routes/backup.routes';
 import plannedExpenseRoutes from './routes/plannedExpense.routes';
 
-app.use(cors());
+// CORS: izinkan frontend origin dan header Authorization (agar backup/export tidak "blocked")
+const corsOptions = {
+  origin: process.env.FRONTEND_ORIGIN || true, // true = reflect request origin; atau set e.g. http://localhost:5173
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
